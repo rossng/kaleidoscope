@@ -48,6 +48,7 @@ executable chapter3
   default-language: Haskell2010
   build-depends:
       base          >=4.7     && <5
+    , bytestring    >=0.10    && <0.11
     , containers    >=0.4     && <0.7
     , haskeline     >=0.7.1.2 && <0.8
     , llvm-hs       >=9.0.0   && <10.0.0
@@ -55,6 +56,7 @@ executable chapter3
     , mtl           >=2.1.3   && <2.3
     , parsec        >=3.1     && <3.2
     , transformers  >=0.3.0.0 && <0.6
+    , ttc           >=0.2.0.0
 
 executable chapter4
   main-is:          Main.hs
@@ -70,6 +72,7 @@ executable chapter4
   default-language: Haskell2010
   build-depends:
       base          >=4.7     && <5
+    , bytestring    >=0.10.8.2
     , containers    >=0.4     && <0.7
     , haskeline     >=0.7.1.2 && <0.8
     , llvm-hs       >=9.0.0   && <10.0.0
@@ -77,6 +80,7 @@ executable chapter4
     , mtl           >=2.1.3   && <2.3
     , parsec        >=3.1     && <3.2
     , transformers  >=0.3.0.0 && <0.6
+    , ttc           >=0.2.0.0
 
 executable chapter5
   main-is:          Main.hs
@@ -92,6 +96,7 @@ executable chapter5
   default-language: Haskell2010
   build-depends:
       base          >=4.7     && <5
+    , bytestring      >=0.10    && <0.11
     , containers    >=0.4     && <0.7
     , haskeline     >=0.7.1.2 && <0.8
     , llvm-hs       >=9.0.0   && <10.0.0
@@ -99,6 +104,7 @@ executable chapter5
     , mtl           >=2.1.3   && <2.3
     , parsec        >=3.1     && <3.2
     , transformers  >=0.3.0.0 && <0.6
+    , ttc           >=0.2.0.0
 
 executable chapter6
   main-is:          Main.hs
@@ -140,6 +146,7 @@ executable chapter7
   default-language: Haskell2010
   build-depends:
       base          >=4.7     && <5
+    , bytestring    >=0.10    && <0.11
     , containers    >=0.4     && <0.7
     , haskeline     >=0.7.1.2 && <0.8
     , llvm-hs       >=9.0.0   && <10.0.0
@@ -147,3 +154,4 @@ executable chapter7
     , mtl           >=2.1.3   && <2.3
     , parsec        >=3.1     && <3.2
     , transformers  >=0.3.0.0 && <0.6
+    , ttc           >=0.2.0.0

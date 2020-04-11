@@ -4,6 +4,7 @@ module Emit where
 
 import LLVM.Module
 import LLVM.Context
+import qualified Data.ByteString.Char8 as B
 
 import qualified LLVM.AST as AST
 import qualified LLVM.AST.Constant as C
@@ -15,12 +16,13 @@ import Data.Int
 import Control.Monad.Except
 import Control.Applicative
 import qualified Data.Map as Map
+import qualified Data.TTC as TTC
 
 import Codegen
 import qualified Syntax as S
 
 toSig :: [String] -> [(AST.Type, AST.Name)]
-toSig = map (\x -> (double, AST.Name x))
+toSig = map (\x -> (double, AST.Name $ TTC.toSBS x))
 
 codegenTop :: S.Expr -> LLVM ()
 codegenTop (S.Function name args body) = do
@@ -32,7 +34,7 @@ codegenTop (S.Function name args body) = do
       setBlock entry
       forM args $ \a -> do
         var <- alloca double
-        store var (local (AST.Name a))
+        store var (local (AST.Name $ TTC.toSBS a))
         assign a var
       cgen body >>= ret
 
@@ -84,7 +86,7 @@ cgen (S.Var x) = getvar x >>= load
 cgen (S.Float n) = return $ cons $ C.Float (F.Double n)
 cgen (S.Call fn args) = do
   largs <- mapM cgen args
-  call (externf (AST.Name fn)) largs
+  call (externf (AST.Name $ TTC.toSBS fn)) largs
 
 -------------------------------------------------------------------------------
 -- Compilation
@@ -95,9 +97,9 @@ liftError = runExceptT >=> either fail return
 
 codegen :: AST.Module -> [S.Expr] -> IO AST.Module
 codegen mod fns = withContext $ \context ->
-  liftError $ withModuleFromAST context newast $ \m -> do
+  withModuleFromAST context newast $ \m -> do
     llstr <- moduleLLVMAssembly m
-    putStrLn llstr
+    B.putStrLn llstr
     return newast
   where
     modn    = mapM codegenTop fns

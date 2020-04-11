@@ -20,6 +20,8 @@ import Data.List
 import Data.Function
 import qualified Data.Map as Map
 
+import qualified Data.TTC as TTC
+
 import Control.Monad.State
 import Control.Applicative
 
@@ -30,6 +32,7 @@ import qualified LLVM.AST as AST
 import qualified LLVM.AST.Linkage as L
 import qualified LLVM.AST.Constant as C
 import qualified LLVM.AST.Attribute as A
+import qualified LLVM.AST.Type as T
 import qualified LLVM.AST.CallingConvention as CC
 import qualified LLVM.AST.FloatingPointPredicate as FP
 
@@ -44,7 +47,7 @@ runLLVM :: AST.Module -> LLVM a -> AST.Module
 runLLVM mod (LLVM m) = execState m mod
 
 emptyModule :: String -> AST.Module
-emptyModule label = defaultModule { moduleName = label }
+emptyModule label = defaultModule { moduleName = TTC.toSBS label }
 
 addDefn :: Definition -> LLVM ()
 addDefn d = do
@@ -54,7 +57,7 @@ addDefn d = do
 define ::  Type -> String -> [(Type, Name)] -> [BasicBlock] -> LLVM ()
 define retty label argtys body = addDefn $
   GlobalDefinition $ functionDefaults {
-    name        = Name label
+    name        = Name $ TTC.toSBS label
   , parameters  = ([Parameter ty nm [] | (ty, nm) <- argtys], False)
   , returnType  = retty
   , basicBlocks = body
@@ -63,7 +66,7 @@ define retty label argtys body = addDefn $
 external ::  Type -> String -> [(Type, Name)] -> LLVM ()
 external retty label argtys = addDefn $
   GlobalDefinition $ functionDefaults {
-    name        = Name label
+    name        = Name $ TTC.toSBS label
   , linkage     = L.External
   , parameters  = ([Parameter ty nm [] | (ty, nm) <- argtys], False)
   , returnType  = retty
@@ -76,7 +79,7 @@ external retty label argtys = addDefn $
 
 -- IEEE 754 double
 double :: Type
-double = FloatingPointType FP_Double
+double = T.FloatingPointType DoubleFP
 
 -------------------------------------------------------------------------------
 -- Names
@@ -139,7 +142,7 @@ emptyBlock :: Int -> BlockState
 emptyBlock i = BlockState i [] Nothing
 
 emptyCodegen :: CodegenState
-emptyCodegen = CodegenState (Name entryBlockName) Map.empty [] 1 0 Map.empty
+emptyCodegen = CodegenState (Name $ TTC.toSBS entryBlockName) Map.empty [] 1 0 Map.empty
 
 execCodegen :: [(String, Operand)] -> Codegen a -> CodegenState
 execCodegen vars m = execState (runCodegen m) emptyCodegen { symtab = vars }
@@ -176,7 +179,7 @@ terminator trm = do
 named :: String -> Codegen a -> Codegen Operand
 named iname m = m >> do
   blk <- current
-  let b = Name iname
+  let b = Name $ TTC.toSBS iname
       (_ := x) = last (stack blk)
   modifyBlock $ blk { stack = init (stack blk) ++ [b := x] }
   return $ local b
@@ -197,11 +200,11 @@ addBlock bname = do
   let new = emptyBlock ix
       (qname, supply) = uniqueName bname nms
 
-  modify $ \s -> s { blocks = Map.insert (Name qname) new bls
+  modify $ \s -> s { blocks = Map.insert (Name $ TTC.toSBS qname) new bls
                    , blockCount = ix + 1
                    , names = supply
                    }
-  return (Name qname)
+  return (Name $ TTC.toSBS qname)
 
 setBlock :: Name -> Codegen Name
 setBlock bname = do

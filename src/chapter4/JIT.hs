@@ -1,8 +1,12 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module JIT where
 
+import qualified Data.ByteString.Char8 as B
 import Data.Int
 import Data.Word
 import Foreign.Ptr ( FunPtr, castFunPtr )
+import qualified Data.TTC as TTC
 
 import Control.Monad.Except
 
@@ -38,13 +42,13 @@ runJIT :: AST.Module -> IO (Either String AST.Module)
 runJIT mod = do
   withContext $ \context ->
     jit context $ \executionEngine ->
-      runExceptT $ withModuleFromAST context mod $ \m ->
+      withModuleFromAST context mod $ \m ->
         withPassManager passes $ \pm -> do
           -- Optimization Pass
           {-runPassManager pm m-}
           optmod <- moduleAST m
           s <- moduleLLVMAssembly m
-          putStrLn s
+          B.putStrLn $ s
 
           EE.withModuleInEngine executionEngine m $ \ee -> do
             mainfn <- EE.getFunction ee (AST.Name "main")
@@ -55,4 +59,4 @@ runJIT mod = do
               Nothing -> return ()
 
           -- Return the optimized module
-          return optmod
+          return $ Right optmod

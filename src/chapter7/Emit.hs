@@ -31,6 +31,8 @@ import Control.Monad.Except
 import Control.Applicative
 import qualified Data.Map as Map
 
+import qualified Data.TTC as TTC
+
 import Codegen
 import JIT (runJIT)
 import qualified Syntax as S
@@ -41,19 +43,19 @@ false = zero
 true = one
 
 toSig :: [String] -> [(AST.Type, AST.Name)]
-toSig = map (\x -> (double, AST.Name x))
+toSig = map (\x -> (double, AST.Name $ TTC.toSBS x))
 
 codegenTop :: S.Expr -> LLVM ()
 codegenTop (S.Function name args body) = do
   define double name largs bls
   where
-    largs = map (\x -> (double, AST.Name x)) args
+    largs = map (\x -> (double, AST.Name $ TTC.toSBS x)) args
     bls = createBlocks $ execCodegen [] $ do
       entry <- addBlock entryBlockName
       setBlock entry
       forM args $ \a -> do
         var <- alloca double
-        store var (local (AST.Name a))
+        store var (local (AST.Name $ TTC.toSBS a))
         assign a var
       cgen body >>= ret
 
@@ -118,7 +120,7 @@ cgen (S.Int n) = return $ cons $ C.Float (F.Double (fromIntegral n))
 cgen (S.Float n) = return $ cons $ C.Float (F.Double n)
 cgen (S.Call fn args) = do
   largs <- mapM cgen args
-  call (externf (AST.Name fn)) largs
+  call (externf (AST.Name $ TTC.toSBS fn)) largs
 cgen (S.If cond tr fl) = do
   ifthen <- addBlock "if.then"
   ifelse <- addBlock "if.else"
